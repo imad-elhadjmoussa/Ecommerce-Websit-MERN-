@@ -33,7 +33,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 const allowedOrigins = [
-    process.env.CLIENT_URL,           // e.g., http://localhost:5173
+    "https://ecommerce-websit-mern.onrender.com",           // e.g., http://localhost:5173
     process.env.ADMIN_DASHBOARD_CLIENT_URL,    // Add as many as needed
 ];
 
