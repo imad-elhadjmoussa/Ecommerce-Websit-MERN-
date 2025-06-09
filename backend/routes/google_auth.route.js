@@ -12,8 +12,8 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 // Google callback
 router.get('/google/callback',
     passport.authenticate('google', {
-        successRedirect: "https://ecommerce-websit-mern.onrender.com",
-        failureRedirect: "https://ecommerce-websit-mern.onrender.com"
+        successRedirect: "https://ecommerce-websit-mern.onrender.com/",
+        failureRedirect: "https://ecommerce-websit-mern.onrender.com/"
     })
 );
 
