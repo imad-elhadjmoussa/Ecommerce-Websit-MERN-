@@ -7,6 +7,7 @@ const session = require('express-session');
 const passport = require('passport');
 require('./config/passport');
 const MongoStore = require('connect-mongo');
+const app = express();
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -41,7 +42,6 @@ const cartRoutes = require('./routes/cart.route'); // Uncomment if you have cart
 const orderRoutes = require('./routes/order.route'); // Uncomment if you have order routes
 const userRoutes = require('./routes/user.route'); // Uncomment if you have user routes
 
-const app = express();
 const port = process.env.PORT;
 
 
