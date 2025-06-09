@@ -18,7 +18,6 @@ router.get('/google/callback',
 );
 
 router.get('/user', (req, res) => {
-    console.log('User request received:', req.user);
     if (req.user) {
         // Send back only the necessary user data
         res.json({
