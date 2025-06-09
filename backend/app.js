@@ -6,6 +6,7 @@ const connectCloudinary = require('./config/cloudinary');
 const session = require('express-session');
 const passport = require('passport');
 require('./config/passport');
+const MongoStore = require('connect-mongo');
 
 const googleAuthRoutes = require('./routes/google_auth.route');
 const productRoutes = require('./routes/product.route');
@@ -14,22 +15,29 @@ const orderRoutes = require('./routes/order.route'); // Uncomment if you have or
 const userRoutes = require('./routes/user.route'); // Uncomment if you have user routes
 
 const app = express();
-const port = process.env.PORT ;
+const port = process.env.PORT;
 
 
 
 // Middleware
 app.use(express.json())
+
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI, // same URI you use to connect MongoDB
+    }),
     cookie: {
-        secure: false, // Set to true if using HTTPS
+        secure: true, // must be true on Render (HTTPS)
         httpOnly: true,
-    },
-    maxAge: 24 * 60 * 60 * 1000
+        sameSite: 'none', // required for cross-origin cookies
+        maxAge: 24 * 60 * 60 * 1000,
+    }
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 const allowedOrigins = [
@@ -54,7 +62,7 @@ const attachUser = require('./middlewares/attachUser');
 app.use(attachUser);
 app.use('/api/auth', googleAuthRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/cart', cartRoutes); 
+app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes); // Uncomment if you have order routes
 app.use('/api/users', userRoutes); // Uncomment if you have user routes
 
