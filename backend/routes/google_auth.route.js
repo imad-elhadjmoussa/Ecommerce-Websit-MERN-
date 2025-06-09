@@ -18,7 +18,7 @@ router.get('/google/callback',
 );
 
 router.get('/user', (req, res) => {
-    if (req.user) {
+    if (req.isAuthenticated()) {
         // Send back only the necessary user data
         res.json({
             id: req.user.id,

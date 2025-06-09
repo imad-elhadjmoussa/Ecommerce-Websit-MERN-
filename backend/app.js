@@ -8,23 +8,20 @@ const passport = require('passport');
 require('./config/passport');
 const MongoStore = require('connect-mongo');
 
-const googleAuthRoutes = require('./routes/google_auth.route');
-const productRoutes = require('./routes/product.route');
-const cartRoutes = require('./routes/cart.route'); // Uncomment if you have cart routes
-const orderRoutes = require('./routes/order.route'); // Uncomment if you have order routes
-const userRoutes = require('./routes/user.route'); // Uncomment if you have user routes
-
-const app = express();
-const port = process.env.PORT;
-
-
-
-// Middleware
-app.use(express.json())
-
+app.use(cors({
+    origin: (origin, callback) => {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+}));
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'secret',
+    secret: 'secret',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -38,6 +35,20 @@ app.use(session({
     }
 }));
 
+const googleAuthRoutes = require('./routes/google_auth.route');
+const productRoutes = require('./routes/product.route');
+const cartRoutes = require('./routes/cart.route'); // Uncomment if you have cart routes
+const orderRoutes = require('./routes/order.route'); // Uncomment if you have order routes
+const userRoutes = require('./routes/user.route'); // Uncomment if you have user routes
+
+const app = express();
+const port = process.env.PORT;
+
+
+
+// Middleware
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 const allowedOrigins = [
@@ -45,17 +56,7 @@ const allowedOrigins = [
     // process.env.ADMIN_DASHBOARD_CLIENT_URL,    // Add as many as needed
 ];
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-}));
+
 
 // Custom middleware to attach user to request
 const attachUser = require('./middlewares/attachUser');
