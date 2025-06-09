@@ -9,6 +9,11 @@ require('./config/passport');
 const MongoStore = require('connect-mongo');
 const app = express();
 
+const allowedOrigins = [
+    "https://ecommerce-websit-mern.onrender.com",           // e.g., http://localhost:5173
+    process.env.ADMIN_DASHBOARD_CLIENT_URL,    // Add as many as needed
+];
+
 app.use(cors({
     origin: (origin, callback) => {
         // allow requests with no origin (like mobile apps or curl requests)
@@ -51,10 +56,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 app.use(passport.session());
-const allowedOrigins = [
-    "https://ecommerce-websit-mern.onrender.com",           // e.g., http://localhost:5173
-    // process.env.ADMIN_DASHBOARD_CLIENT_URL,    // Add as many as needed
-];
+
 
 
 
