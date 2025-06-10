@@ -14,16 +14,21 @@ const allowedOrigins = [
     process.env.ADMIN_DASHBOARD_CLIENT_URL,    // Add as many as needed
 ];
 
+// app.use(cors({
+//     origin: (origin, callback) => {
+//         // allow requests with no origin (like mobile apps or curl requests)
+//         if (!origin || allowedOrigins.includes(origin)) {
+//             callback(null, true);
+//         } else {
+//             callback(new Error('Not allowed by CORS'));
+//         }
+//     },
+//     credentials: true,
+// }));
+
 app.use(cors({
-    origin: (origin, callback) => {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
+    origin: 'https://ecommerce-websit-mern.onrender.com',
+    credentials: true // This is crucial for sessions
 }));
 
 app.use(session({
