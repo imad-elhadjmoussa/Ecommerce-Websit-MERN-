@@ -5,104 +5,108 @@ const connectDB = require('./config/mongoose');
 const connectCloudinary = require('./config/cloudinary');
 const session = require('express-session');
 const passport = require('passport');
-
 const MongoStore = require('connect-mongo');
 const app = express();
 
-const allowedOrigins = [
-    "https://ecommerce-websit-mern.onrender.com",           // e.g., http://localhost:5173
-    process.env.ADMIN_DASHBOARD_CLIENT_URL,    // Add as many as needed
-];
+// Basic middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// app.use(cors({
-//     origin: (origin, callback) => {
-//         // allow requests with no origin (like mobile apps or curl requests)
-//         if (!origin || allowedOrigins.includes(origin)) {
-//             callback(null, true);
-//         } else {
-//             callback(new Error('Not allowed by CORS'));
-//         }
-//     },
-//     credentials: true,
-// }));
-
+// CORS configuration for Render
 app.use(cors({
-    origin: 'https://ecommerce-websit-mern.onrender.com',
-    credentials: true // This is crucial for sessions
+    origin: ['https://ecommerce-websit-mern.onrender.com', process.env.CLIENT_URL].filter(Boolean),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
 
-// Add this before session middleware
-app.use((req, res, next) => {
-    console.log('Incoming request path:', req.path);
-    next();
-});
+// Trust proxy - important for Render
+app.set('trust proxy', 1);
 
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'secret',
-    resave: true, // Changed to true to ensure session is saved
-    saveUninitialized: true, // Changed to true to save new sessions
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI,
-        ttl: 24 * 60 * 60, // Session TTL in seconds (1 day)
-        autoRemove: 'native', // Use native TTL index
-        touchAfter: 24 * 3600 // time period in seconds
-    }),
-    cookie: {
-        secure: true,
-        httpOnly: true,
-        sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-    }
-}));
-
-// Add this after session middleware to log session state
+// Request logging middleware
 app.use((req, res, next) => {
-    console.log('Session after middleware:', {
-        id: req.session?.id,
-        hasUser: !!req.session?.user,
-        hasPassportUser: !!req.user
+    console.log('Incoming request:', {
+        path: req.path,
+        method: req.method,
+        origin: req.headers.origin,
+        cookie: req.headers.cookie ? 'present' : 'missing'
     });
     next();
 });
 
-const googleAuthRoutes = require('./routes/google_auth.route');
-const productRoutes = require('./routes/product.route');
-const cartRoutes = require('./routes/cart.route'); // Uncomment if you have cart routes
-const orderRoutes = require('./routes/order.route'); // Uncomment if you have order routes
-const userRoutes = require('./routes/user.route'); // Uncomment if you have user routes
+// Session configuration for Render
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'secret',
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,
+        ttl: 24 * 60 * 60, // 1 day
+        autoRemove: 'native',
+        touchAfter: 24 * 3600,
+        crypto: {
+            secret: process.env.SESSION_SECRET || 'secret'
+        }
+    }),
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // true on Render
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+    },
+    name: 'sessionId' // Change session cookie name
+}));
 
-const port = process.env.PORT;
-
-
-
-// Middleware
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }));
-
+// Initialize Passport and restore authentication state from session
 require('./config/passport');
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
+// Session logging middleware
+app.use((req, res, next) => {
+    console.log('Session state:', {
+        id: req.session?.id,
+        hasUser: !!req.session?.user,
+        hasPassportUser: !!req.user,
+        cookie: req.session?.cookie,
+        passportUser: req.user ? {
+            id: req.user.id,
+            email: req.user.email
+        } : null
+    });
+    next();
+});
 
 // Custom middleware to attach user to request
 const attachUser = require('./middlewares/attachUser');
 app.use(attachUser);
+
+// Routes
+const googleAuthRoutes = require('./routes/google_auth.route');
+const productRoutes = require('./routes/product.route');
+const cartRoutes = require('./routes/cart.route');
+const orderRoutes = require('./routes/order.route');
+const userRoutes = require('./routes/user.route');
+
 app.use('/api/auth', googleAuthRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes); // Uncomment if you have order routes
-app.use('/api/users', userRoutes); // Uncomment if you have user routes
+app.use('/api/orders', orderRoutes);
+app.use('/api/users', userRoutes);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', session: !!req.session });
+});
 
-
-// Connect to MongoDB
-connectDB()
+// Connect to MongoDB and Cloudinary
+connectDB();
 connectCloudinary();
 
-
+const port = process.env.PORT;
 app.listen(port, () => {
-    // Connect to MongoDB
-    console.log(`Server is running on ${port}`);
+    console.log(`Server is running on ${port} in ${process.env.NODE_ENV || 'development'} mode`);
 });
