@@ -54,6 +54,8 @@ const port = process.env.PORT;
 // Middleware
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
+
+require('./config/passport');
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -74,7 +76,7 @@ app.use('/api/users', userRoutes); // Uncomment if you have user routes
 // Connect to MongoDB
 connectDB()
 connectCloudinary();
-require('./config/passport');
+
 
 app.listen(port, () => {
     // Connect to MongoDB
