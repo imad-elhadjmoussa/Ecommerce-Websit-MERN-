@@ -31,20 +31,39 @@ app.use(cors({
     credentials: true // This is crucial for sessions
 }));
 
+// Add this before session middleware
+app.use((req, res, next) => {
+    console.log('Incoming request path:', req.path);
+    next();
+});
+
 app.use(session({
-    secret: 'secret',
-    resave: false,
-    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET || 'secret',
+    resave: true, // Changed to true to ensure session is saved
+    saveUninitialized: true, // Changed to true to save new sessions
     store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI, // same URI you use to connect MongoDB
+        mongoUrl: process.env.MONGO_URI,
+        ttl: 24 * 60 * 60, // Session TTL in seconds (1 day)
+        autoRemove: 'native', // Use native TTL index
+        touchAfter: 24 * 3600 // time period in seconds
     }),
     cookie: {
-        secure: true, // must be true on Render (HTTPS)
+        secure: true,
         httpOnly: true,
-        sameSite: 'none', // required for cross-origin cookies
-        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'none',
+        maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
     }
 }));
+
+// Add this after session middleware to log session state
+app.use((req, res, next) => {
+    console.log('Session after middleware:', {
+        id: req.session?.id,
+        hasUser: !!req.session?.user,
+        hasPassportUser: !!req.user
+    });
+    next();
+});
 
 const googleAuthRoutes = require('./routes/google_auth.route');
 const productRoutes = require('./routes/product.route');

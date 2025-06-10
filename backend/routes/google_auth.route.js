@@ -16,27 +16,50 @@ router.get('/google/callback',
     }),
     (req, res) => {
         console.log('Google callback successful, user:', req.user);
-        // Ensure session is saved before redirect
+        
+        // Explicitly set the user in the session
+        req.session.user = req.user;
+        
+        // Save session and handle any errors
         req.session.save((err) => {
             if (err) {
                 console.error('Error saving session:', err);
                 return res.redirect("https://ecommerce-websit-mern.onrender.com");
             }
-            console.log('Session saved successfully');
+            
+            // Verify session was saved
+            console.log('Session after save:', {
+                id: req.session.id,
+                hasUser: !!req.session.user,
+                user: req.session.user ? {
+                    id: req.session.user.id,
+                    email: req.session.user.email
+                } : null
+            });
+            
             res.redirect("https://ecommerce-websit-mern.onrender.com");
         });
     }
 );
 
 router.get('/user', (req, res) => {
+    console.log('User route - Session state:', {
+        sessionID: req.session?.id,
+        hasSessionUser: !!req.session?.user,
+        hasPassportUser: !!req.user,
+        passportUser: req.user ? {
+            id: req.user.id,
+            email: req.user.email
+        } : null
+    });
+
     if (req.user) {
-        // Send back only the necessary user data
         res.json({
             id: req.user.id,
             username: req.user.username,
             email: req.user.email,
-            avatar: req.user.avatar, // if coming from Google
-            isAdmin: req.user.isAdmin || false // assuming isAdmin is a field in your user model
+            avatar: req.user.avatar,
+            isAdmin: req.user.isAdmin || false
         });
     } else {
         res.status(401).json({ message: 'Not authenticated' });
