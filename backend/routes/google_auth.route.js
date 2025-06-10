@@ -12,9 +12,20 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 // Google callback
 router.get('/google/callback',
     passport.authenticate('google', {
-        successRedirect: "https://ecommerce-websit-mern.onrender.com",
         failureRedirect: "https://ecommerce-websit-mern.onrender.com"
-    })
+    }),
+    (req, res) => {
+        console.log('Google callback successful, user:', req.user);
+        // Ensure session is saved before redirect
+        req.session.save((err) => {
+            if (err) {
+                console.error('Error saving session:', err);
+                return res.redirect("https://ecommerce-websit-mern.onrender.com");
+            }
+            console.log('Session saved successfully');
+            res.redirect("https://ecommerce-websit-mern.onrender.com");
+        });
+    }
 );
 
 router.get('/user', (req, res) => {
