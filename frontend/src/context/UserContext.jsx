@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api';
+import { toast } from 'sonner';
 
 const UserContext = createContext();
 
@@ -13,51 +14,55 @@ export const UserProvider = ({ children }) => {
 
     useEffect(() => {
         const tryFetchUser = async () => {
-            setLoading(true); // Start loading
+            setLoading(true);
+            console.log('Attempting to fetch user...');
 
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/user`, {
-                    method: 'GET',
-                    credentials: 'include', // Same as withCredentials: true in Axios
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data) {
-                        setUser(data);
-                        setLoading(false); // Stop loading if user found
-                        return;
-                    }
+                // Try Google auth first
+                const response = await api.get('/auth/user');
+                console.log('Google auth response:', response.data);
+                
+                if (response.data) {
+                    setUser(response.data);
+                    setLoading(false);
+                    return;
                 }
-                } catch (err) {
-                    console.warn("Google user not found, trying custom session...");
+            } catch (err) {
+                console.warn("Google auth failed, trying custom session...", err);
+            }
 
-                }
-
-                try {
-                    const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/check-auth`, { withCredentials: true });
+            try {
+                // Try custom session
+                const response = await api.get('/users/check-auth');
+                console.log('Custom session response:', response.data);
+                
+                if (response.data?.user) {
                     setUser(response.data.user);
-                    setLoading(false); // Stop loading if user found
-                } catch (error) {
-                    console.error('No authenticated user found');
+                } else {
                     setUser(null);
-                } finally {
-                    setLoading(false); // Stop loading in all cases
                 }
-            };
+            } catch (error) {
+                console.error('No authenticated user found:', error);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-            tryFetchUser();
-        }, []);
+        tryFetchUser();
+    }, []);
 
     const logout = async () => {
         try {
-            await axios.get(`${import.meta.env.VITE_API_URL}/auth/logout`, { withCredentials: true });
+            await api.get('/auth/logout');
             setUser(null);
+            toast.success('Logged out successfully');
             window.location.reload();
         } catch (error) {
             console.error('Failed to log out:', error);
+            toast.error('Failed to log out. Please try again.');
         }
-    }
+    };
 
     return (
         <UserContext.Provider value={{ user, setUser, loading, logout, loginWithGoogleProvider }}>

@@ -16,7 +16,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({
     origin: ['https://ecommerce-websit-mern.onrender.com', process.env.CLIENT_URL].filter(Boolean),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204
@@ -31,7 +32,8 @@ app.use((req, res, next) => {
         path: req.path,
         method: req.method,
         origin: req.headers.origin,
-        cookie: req.headers.cookie ? 'present' : 'missing'
+        cookie: req.headers.cookie,
+        host: req.headers.host
     });
     next();
 });
@@ -43,7 +45,7 @@ app.use(session({
     saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
-        ttl: 24 * 60 * 60, // 1 day
+        ttl: 24 * 60 * 60,
         autoRemove: 'native',
         touchAfter: 24 * 3600,
         crypto: {
@@ -51,14 +53,25 @@ app.use(session({
         }
     }),
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // true on Render
+        secure: true, // Always true for Render
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+        sameSite: 'none', // Required for cross-origin cookies
+        maxAge: 24 * 60 * 60 * 1000,
+        path: '/',
+        // Remove domain setting to let browser handle it
     },
-    name: 'sessionId' // Change session cookie name
+    name: 'connect.sid' // Use default connect.sid name
 }));
+
+// Add cookie middleware
+app.use((req, res, next) => {
+    // Set CORS headers for cookies
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
+    next();
+});
 
 // Initialize Passport and restore authentication state from session
 require('./config/passport');
