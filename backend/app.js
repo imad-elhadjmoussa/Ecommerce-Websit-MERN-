@@ -5,7 +5,7 @@ const connectDB = require('./config/mongoose');
 const connectCloudinary = require('./config/cloudinary');
 const session = require('express-session');
 const passport = require('passport');
-require('./config/passport');
+
 const MongoStore = require('connect-mongo');
 const app = express();
 
@@ -74,6 +74,7 @@ app.use('/api/users', userRoutes); // Uncomment if you have user routes
 // Connect to MongoDB
 connectDB()
 connectCloudinary();
+require('./config/passport');
 
 app.listen(port, () => {
     // Connect to MongoDB
