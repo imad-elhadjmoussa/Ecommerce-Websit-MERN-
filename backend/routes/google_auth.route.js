@@ -27,7 +27,7 @@ router.get('/google/callback',
             query: req.query
         });
         passport.authenticate('google', {
-            failureRedirect:"https://ecommerce-websit-mern.onrender.com"
+            failureRedirect: process.env.CLIENT_URL || "https://ecommerce-websit-mern.onrender.com"
         })(req, res, next);
     },
     (req, res) => {
