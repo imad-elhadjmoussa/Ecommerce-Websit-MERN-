@@ -16,31 +16,38 @@ export const UserProvider = ({ children }) => {
             setLoading(true); // Start loading
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/user`, { withCredentials: true });
-                if (response.data) {
-                    setUser(response.data);
-                    setLoading(false); // Stop loading if user found
-                    return;
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/user`, {
+                    method: 'GET',
+                    credentials: 'include', // Same as withCredentials: true in Axios
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data) {
+                        setUser(data);
+                        setLoading(false); // Stop loading if user found
+                        return;
+                    }
                 }
-            } catch (err) {
-                console.warn("Google user not found, trying custom session...");
-                
-            }
+                } catch (err) {
+                    console.warn("Google user not found, trying custom session...");
 
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/check-auth`, { withCredentials: true });
-                setUser(response.data.user);
-                setLoading(false); // Stop loading if user found
-            } catch (error) {
-                console.error('No authenticated user found');
-                setUser(null);
-            } finally {
-                setLoading(false); // Stop loading in all cases
-            }
-        };
+                }
 
-        tryFetchUser();
-    }, []);
+                try {
+                    const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/check-auth`, { withCredentials: true });
+                    setUser(response.data.user);
+                    setLoading(false); // Stop loading if user found
+                } catch (error) {
+                    console.error('No authenticated user found');
+                    setUser(null);
+                } finally {
+                    setLoading(false); // Stop loading in all cases
+                }
+            };
+
+            tryFetchUser();
+        }, []);
 
     const logout = async () => {
         try {
