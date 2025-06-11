@@ -74,7 +74,11 @@ const getUserOrders = async (req, res) => {
 const getAllOrders = async (req, res) => {
     try {
         const orders = await Order.find()
-            .populate('userId', 'email username') // Populate user details
+            .populate({
+                path: 'userId',
+                select: 'email username',
+                model: 'User'  // Changed to match the model name in user.model.js
+            })
             .sort({ orderDate: -1 }); // Sort by newest first
 
         if (!orders || orders.length === 0) {
