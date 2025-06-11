@@ -118,17 +118,7 @@ const adminLogin = async (req, res) => {
             await user.save();
         }
 
-        // First, clear any existing session
-        if (req.session) {
-            await new Promise((resolve) => {
-                req.session.destroy((err) => {
-                    if (err) console.error('Error destroying session:', err);
-                    resolve();
-                });
-            });
-        }
-
-        // Clear passport user if exists
+        // Clear passport user if exists (do this before session operations)
         if (req.user) {
             await new Promise((resolve) => {
                 req.logout((err) => {
@@ -138,51 +128,43 @@ const adminLogin = async (req, res) => {
             });
         }
 
-        // Create new session
-        req.session.regenerate(async (err) => {
+        // Store admin user in session
+        req.session.user = {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            isAdmin: true,
+            avatar: user.avatar
+        };
+
+        // Save session explicitly
+        req.session.save((err) => {
             if (err) {
-                console.error('Error regenerating session:', err);
-                return res.status(500).json({ message: "Failed to create admin session" });
+                console.error('Session save error:', err);
+                return res.status(500).json({ message: "Failed to save admin session" });
             }
 
-            // Store admin user in session
-            req.session.user = {
-                _id: user._id,
-                username: user.username,
-                email: user.email,
+            console.log('Admin login successful:', {
+                userId: user._id,
+                sessionId: req.session.id,
                 isAdmin: true,
-                avatar: user.avatar
-            };
+                hasPassportUser: !!req.user,
+                hasSessionUser: !!req.session?.user
+            });
 
-            // Save session explicitly
-            req.session.save((err) => {
-                if (err) {
-                    console.error('Session save error:', err);
-                    return res.status(500).json({ message: "Failed to save admin session" });
-                }
+            // Set cookie explicitly
+            res.cookie('connect.sid', req.session.id, {
+                secure: process.env.NODE_ENV === 'production',
+                httpOnly: true,
+                sameSite: 'none',
+                maxAge: 24 * 60 * 60 * 1000,
+                path: '/',
+                domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+            });
 
-                console.log('Admin login successful:', {
-                    userId: user._id,
-                    sessionId: req.session.id,
-                    isAdmin: true,
-                    hasPassportUser: !!req.user,
-                    hasSessionUser: !!req.session?.user
-                });
-
-                // Set cookie explicitly
-                res.cookie('connect.sid', req.session.id, {
-                    secure: process.env.NODE_ENV === 'production',
-                    httpOnly: true,
-                    sameSite: 'none',
-                    maxAge: 24 * 60 * 60 * 1000,
-                    path: '/',
-                    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
-                });
-
-                res.json({
-                    message: "Admin logged in successfully",
-                    user: req.session.user
-                });
+            res.json({
+                message: "Admin logged in successfully",
+                user: req.session.user
             });
         });
     } catch (err) {
