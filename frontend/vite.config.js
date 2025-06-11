@@ -12,6 +12,11 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173 // or 5174 for the second project
+    port: 5173, // or 5174 for the second project
+    historyApiFallback: true
+  },
+  preview: {
+    port: 5173,
+    historyApiFallback: true
   }
 })
