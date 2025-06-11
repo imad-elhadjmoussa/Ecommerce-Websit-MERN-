@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAllOrders } from '../lib/api';
-import { getAllProducts } from '../lib/api';
+import { getAllOrders, getProducts } from '../lib/api';
 import { format } from 'date-fns';
 import { 
     Package, 
     ShoppingCart, 
     TrendingUp, 
     DollarSign,
-    Loader2
+    Loader2,
+    AlertCircle
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const Home = () => {
     const [stats, setStats] = useState({
@@ -25,28 +26,43 @@ const Home = () => {
         cancelledOrders: 0
     });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
                 setLoading(true);
+                setError(null);
+                
+                // Fetch both orders and products in parallel
                 const [ordersResponse, productsResponse] = await Promise.all([
-                    getAllOrders(),
-                    getAllProducts()
+                    getAllOrders().catch(err => {
+                        console.error('Error fetching orders:', err);
+                        toast.error('Failed to fetch orders data');
+                        return { orders: [] };
+                    }),
+                    getProducts().catch(err => {
+                        console.error('Error fetching products:', err);
+                        toast.error('Failed to fetch products data');
+                        return { products: [] };
+                    })
                 ]);
 
-                const orders = ordersResponse.orders;
-                const products = productsResponse.products;
+                const orders = ordersResponse.orders || [];
+                const products = productsResponse.products || [];
 
                 // Calculate statistics
-                const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+                const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
                 const orderStatusCounts = orders.reduce((acc, order) => {
-                    acc[order.status] = (acc[order.status] || 0) + 1;
+                    if (order.status) {
+                        acc[order.status] = (acc[order.status] || 0) + 1;
+                    }
                     return acc;
                 }, {});
 
                 // Get recent orders (last 5)
                 const recentOrders = [...orders]
+                    .filter(order => order.orderDate) // Filter out orders without dates
                     .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
                     .slice(0, 5);
 
@@ -63,6 +79,8 @@ const Home = () => {
                 });
             } catch (error) {
                 console.error('Error fetching stats:', error);
+                setError('Failed to load dashboard data');
+                toast.error('Failed to load dashboard data');
             } finally {
                 setLoading(false);
             }
@@ -75,6 +93,21 @@ const Home = () => {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-2">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+                <p className="text-destructive">{error}</p>
+                <button 
+                    onClick={() => window.location.reload()} 
+                    className="text-sm text-primary hover:underline"
+                >
+                    Try again
+                </button>
             </div>
         );
     }
