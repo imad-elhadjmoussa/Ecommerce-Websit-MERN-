@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
     Package,
@@ -7,10 +7,30 @@ import {
     Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import axios from "axios";
 
 function Sidebar() {
     const location = useLocation();
+    const navigate = useNavigate();
     const pathname = location.pathname;
+
+    const handleLogout = async () => {
+        try {
+            await axios.post('/api/users/logout', {}, {
+                withCredentials: true
+            });
+            
+            // Clear any local storage or state if needed
+            localStorage.removeItem('adminToken');
+            
+            toast.success("Logged out successfully");
+            navigate("/login");
+        } catch (error) {
+            console.error('Logout error:', error);
+            toast.error("Failed to logout. Please try again.");
+        }
+    };
 
     const navItems = [
         {
@@ -32,17 +52,7 @@ function Sidebar() {
             name: "Orders",
             icon: ShoppingCart,
             href: "/orders",
-        },
-        {
-            name: "Customers",
-            icon: Users,
-            href: "/customers",
-        },
-        {
-            name: "Settings",
-            icon: Settings,
-            href: "/settings",
-        },
+        }
     ];
 
     return (
@@ -72,7 +82,12 @@ function Sidebar() {
                     </nav>
                 </div>
                 <div className="p-4 mt-auto">
-                    <Button size="sm" className="w-full">
+                    <Button 
+                        size="sm" 
+                        className="w-full"
+                        onClick={handleLogout}
+                        variant="destructive"
+                    >
                         Logout
                     </Button>
                 </div>
