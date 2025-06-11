@@ -17,11 +17,16 @@ const AdminLogin = () => {
         password: ''
     });
 
-    // Get test credentials from environment variables
+    // Get test credentials from environment variables with fallback values
     const testCredentials = {
         email: import.meta.env.VITE_TEST_ADMIN_EMAIL || 'admin@admin.com',
         password: import.meta.env.VITE_TEST_ADMIN_PASSWORD || 'admin'
     };
+
+    // Validate environment variables
+    if (!import.meta.env.VITE_TEST_ADMIN_EMAIL || !import.meta.env.VITE_TEST_ADMIN_PASSWORD) {
+        console.warn('Test admin credentials not found in environment variables. Using fallback values.');
+    }
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -36,8 +41,19 @@ const AdminLogin = () => {
         setIsLoading(true);
         setError('');
 
+        // Validate form data
+        if (!formData.email || !formData.password) {
+            setError('Please fill in all fields');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const url = `${import.meta.env.VITE_API_URL}/users/admin-login`;
+            if (!url) {
+                throw new Error('API URL is not configured');
+            }
+
             const { data } = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,15 +61,29 @@ const AdminLogin = () => {
                 withCredentials: true,
             });
 
+            if (!data || !data.user) {
+                throw new Error('Invalid response from server');
+            }
+
             setUser(data.user);
             // Redirect to admin dashboard after successful login
             window.location.href = '/';
 
         } catch (err) {
             if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.message || 'Authentication failed');
+                if (err.response) {
+                    // The request was made and the server responded with a status code
+                    // that falls out of the range of 2xx
+                    setError(err.response.data?.message || `Server error: ${err.response.status}`);
+                } else if (err.request) {
+                    // The request was made but no response was received
+                    setError('No response from server. Please check your internet connection.');
+                } else {
+                    // Something happened in setting up the request that triggered an Error
+                    setError('Failed to make request. Please try again.');
+                }
             } else {
-                setError('An unexpected error occurred');
+                setError(err.message || 'An unexpected error occurred');
             }
             console.error('Authentication error:', err);
         } finally {
