@@ -95,6 +95,13 @@ const adminLogin = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        console.log('Admin login attempt:', {
+            email,
+            hasPassportUser: !!req.user,
+            hasSession: !!req.session,
+            hasSessionUser: !!req.session?.user
+        });
+
         if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
             return res.status(400).json({ msg: "Invalid admin credentials" });
         }
@@ -111,45 +118,75 @@ const adminLogin = async (req, res) => {
             await user.save();
         }
 
-        // Clear passport user if exists
-        if (req.user) {
-            req.logout((err) => {
-                if (err) {
-                    console.error('Error logging out passport user:', err);
-                }
+        // First, clear any existing session
+        if (req.session) {
+            await new Promise((resolve) => {
+                req.session.destroy((err) => {
+                    if (err) console.error('Error destroying session:', err);
+                    resolve();
+                });
             });
         }
 
-        // Store in session
-        req.session.user = {
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            isAdmin: true, // Force isAdmin to true for admin login
-            avatar: user.avatar
-        };
+        // Clear passport user if exists
+        if (req.user) {
+            await new Promise((resolve) => {
+                req.logout((err) => {
+                    if (err) console.error('Error logging out passport user:', err);
+                    resolve();
+                });
+            });
+        }
 
-        // Save session explicitly
-        req.session.save((err) => {
+        // Create new session
+        req.session.regenerate(async (err) => {
             if (err) {
-                console.error('Session save error:', err);
+                console.error('Error regenerating session:', err);
                 return res.status(500).json({ message: "Failed to create admin session" });
             }
 
-            console.log('Admin login successful:', {
-                userId: user._id,
-                sessionId: req.session.id,
+            // Store admin user in session
+            req.session.user = {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
                 isAdmin: true,
-                passportUserCleared: !req.user
-            });
+                avatar: user.avatar
+            };
 
-            res.json({
-                message: "Admin logged in successfully",
-                user: req.session.user
+            // Save session explicitly
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ message: "Failed to save admin session" });
+                }
+
+                console.log('Admin login successful:', {
+                    userId: user._id,
+                    sessionId: req.session.id,
+                    isAdmin: true,
+                    hasPassportUser: !!req.user,
+                    hasSessionUser: !!req.session?.user
+                });
+
+                // Set cookie explicitly
+                res.cookie('connect.sid', req.session.id, {
+                    secure: process.env.NODE_ENV === 'production',
+                    httpOnly: true,
+                    sameSite: 'none',
+                    maxAge: 24 * 60 * 60 * 1000,
+                    path: '/',
+                    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+                });
+
+                res.json({
+                    message: "Admin logged in successfully",
+                    user: req.session.user
+                });
             });
         });
     } catch (err) {
-        console.error(err);
+        console.error('Admin login error:', err);
         res.status(500).json({ message: "Server error" });
     }
 };
