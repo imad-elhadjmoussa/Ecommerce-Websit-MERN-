@@ -36,8 +36,10 @@ const AdminLogin = () => {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (event) => {
+        if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+        }
         setIsLoading(true);
         setError('');
 
