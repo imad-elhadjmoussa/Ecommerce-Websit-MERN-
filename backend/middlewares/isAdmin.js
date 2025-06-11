@@ -10,21 +10,15 @@ const isAdmin = async (req, res, next) => {
     }
 
     try {
-        // Check if user's email matches the admin email
-        if (user.email !== process.env.ADMIN_EMAIL) {
-            return res.status(403).json({ message: 'Access denied: Not an admin email' });
-        }
-
-        // Fetch full user from DB (to get hashed password)
+        // Fetch full user from DB
         const dbUser = await User.findById(user._id);
         if (!dbUser) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Compare stored admin hash (from env) with actual user's password
-        const isPasswordMatch = await dbUser.matchPassword(process.env.ADMIN_PASSWORD);
-        if (!isPasswordMatch) {
-            return res.status(403).json({ message: 'Access denied: Invalid admin credentials' });
+        // Check if user is admin using the isAdmin field
+        if (!dbUser.isAdmin) {
+            return res.status(403).json({ message: 'Access denied: Not an admin user' });
         }
 
         // User is admin
