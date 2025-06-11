@@ -3,13 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
-import axios from "axios";
 import { useUser } from "../context/UserContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
 const AdminLogin = () => {
-    const { setUser } = useUser();
+    const { login } = useUser();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
@@ -36,42 +35,17 @@ const AdminLogin = () => {
         }));
     };
 
-    const handleSubmit = async (event) => {
-            event.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setIsLoading(true);
         setError('');
 
-        // Validate form data
-        if (!formData.email || !formData.password) {
-            setError('Please fill in all fields');
-            setIsLoading(false);
-            return;
-        }
-
         try {
-            const url = `${import.meta.env.VITE_API_URL}/users/admin-login`;
-            if (!url) {
-                throw new Error('API URL is not configured');
-            }
-
-            const { data } = await axios.post(url, formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true,
-            });
-
-            if (!data || !data.user) {
-                throw new Error('Invalid response from server');
-            }
-
-            setUser(data.user);
+            await login(formData);
             // Redirect to admin dashboard after successful login
             window.location.href = '/';
-
         } catch (err) {
-            setError(err.response?.data?.message || 'Authentication failed');   
-            console.error('Authentication error:', err);
+            setError(err.message || 'Authentication failed');
         } finally {
             setIsLoading(false);
         }
