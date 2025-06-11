@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getAllOrders, updateOrderStatus } from '../lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
     TableBody,
+    TableCaption,
     TableCell,
     TableHead,
     TableHeader,
@@ -85,153 +85,152 @@ const Orders = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex justify-center items-center h-64">
+                <p>Loading orders...</p>
+            </div>
+        );
+    }
+
+    if (orders.length === 0) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <p>No orders found.</p>
             </div>
         );
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Orders Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <ScrollArea className="h-[calc(100vh-200px)]">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50px]"></TableHead>
-                                <TableHead>Order ID</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Items</TableHead>
-                                <TableHead>Total</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {orders.map((order) => (
-                                <>
-                                    <TableRow key={order._id}>
-                                        <TableCell>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => toggleOrderDetails(order._id)}
-                                            >
-                                                {expandedOrders.has(order._id) ? (
-                                                    <ChevronDown className="h-4 w-4" />
+        <div className="p-6 max-w-7xl mx-auto">
+            <h1 className="text-2xl font-bold mb-6">Orders Management</h1>
+            
+            <ScrollArea className="h-[calc(100vh-200px)]">
+                <Table>
+                    <TableCaption>A list of all orders.</TableCaption>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[50px]"></TableHead>
+                            <TableHead>Order ID</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Items</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {orders.map((order) => (
+                            <>
+                                <TableRow key={order._id}>
+                                    <TableCell>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleOrderDetails(order._id)}
+                                        >
+                                            {expandedOrders.has(order._id) ? (
+                                                <ChevronDown className="h-4 w-4" />
+                                            ) : (
+                                                <ChevronRight className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell className="font-medium">
+                                        {order._id.slice(-6).toUpperCase()}
+                                    </TableCell>
+                                    <TableCell>
+                                        {order.userId?.email || 'N/A'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {format(new Date(order.orderDate), 'MMM dd, yyyy')}
+                                    </TableCell>
+                                    <TableCell>{order.items.length} items</TableCell>
+                                    <TableCell>{order.totalAmount} DA</TableCell>
+                                    <TableCell>
+                                        <Badge 
+                                            className={`${statusColors[order.status]} text-white`}
+                                        >
+                                            {order.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Select
+                                            disabled={updating === order._id}
+                                            value={order.status}
+                                            onValueChange={(value) => handleStatusUpdate(order._id, value)}
+                                        >
+                                            <SelectTrigger className="w-[140px]">
+                                                {updating === order._id ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
                                                 ) : (
-                                                    <ChevronRight className="h-4 w-4" />
+                                                    <SelectValue placeholder="Update status" />
                                                 )}
-                                            </Button>
-                                        </TableCell>
-                                        <TableCell className="font-medium">
-                                            {order._id.slice(-6).toUpperCase()}
-                                        </TableCell>
-                                        <TableCell>
-                                            {order.userId?.email || 'N/A'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {format(new Date(order.orderDate), 'MMM dd, yyyy')}
-                                        </TableCell>
-                                        <TableCell>{order.items.length} items</TableCell>
-                                        <TableCell>{order.totalAmount} DA</TableCell>
-                                        <TableCell>
-                                            <Badge 
-                                                className={`${statusColors[order.status]} text-white`}
-                                            >
-                                                {order.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Select
-                                                disabled={updating === order._id}
-                                                value={order.status}
-                                                onValueChange={(value) => handleStatusUpdate(order._id, value)}
-                                            >
-                                                <SelectTrigger className="w-[140px]">
-                                                    {updating === order._id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <SelectValue placeholder="Update status" />
-                                                    )}
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="pending">Pending</SelectItem>
-                                                    <SelectItem value="processing">Processing</SelectItem>
-                                                    <SelectItem value="shipped">Shipped</SelectItem>
-                                                    <SelectItem value="delivered">Delivered</SelectItem>
-                                                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                    </TableRow>
-                                    {expandedOrders.has(order._id) && (
-                                        <TableRow>
-                                            <TableCell colSpan={8} className="bg-muted/50">
-                                                <div className="p-4 space-y-4">
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <h4 className="font-semibold mb-2">Shipping Information</h4>
-                                                            <div className="space-y-1 text-sm">
-                                                                <p><span className="font-medium">Address:</span> {order.address.street}</p>
-                                                                <p><span className="font-medium">City:</span> {order.address.city}</p>
-                                                                <p><span className="font-medium">Postal Code:</span> {order.address.postalCode}</p>
-                                                                <p><span className="font-medium">Country:</span> {order.address.country}</p>
-                                                                <p><span className="font-medium">Phone:</span> {order.phone}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-semibold mb-2">Order Details</h4>
-                                                            <div className="space-y-1 text-sm">
-                                                                <p><span className="font-medium">Order ID:</span> {order._id}</p>
-                                                                <p><span className="font-medium">Order Date:</span> {format(new Date(order.orderDate), 'PPpp')}</p>
-                                                                <p><span className="font-medium">Total Items:</span> {order.items.length}</p>
-                                                                <p><span className="font-medium">Total Amount:</span> {order.totalAmount} DA</p>
-                                                            </div>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="pending">Pending</SelectItem>
+                                                <SelectItem value="processing">Processing</SelectItem>
+                                                <SelectItem value="shipped">Shipped</SelectItem>
+                                                <SelectItem value="delivered">Delivered</SelectItem>
+                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableCell>
+                                </TableRow>
+                                {expandedOrders.has(order._id) && (
+                                    <TableRow>
+                                        <TableCell colSpan={8} className="bg-muted/50 p-4">
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div>
+                                                        <h4 className="font-semibold mb-2">Shipping Information</h4>
+                                                        <div className="space-y-1 text-sm">
+                                                            <p><span className="font-medium">Address:</span> {order.address.street}</p>
+                                                            <p><span className="font-medium">City:</span> {order.address.city}</p>
+                                                            <p><span className="font-medium">Postal Code:</span> {order.address.postalCode}</p>
+                                                            <p><span className="font-medium">Country:</span> {order.address.country}</p>
+                                                            <p><span className="font-medium">Phone:</span> {order.phone}</p>
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-semibold mb-2">Items</h4>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                            {order.items.map((item, index) => (
-                                                                <div key={index} className="flex items-center space-x-4 p-3 bg-background rounded-lg border">
-                                                                    <img 
-                                                                        src={item.image} 
-                                                                        alt={item.name}
-                                                                        className="w-16 h-16 object-cover rounded"
-                                                                    />
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="font-medium truncate">{item.name}</p>
-                                                                        <p className="text-sm text-muted-foreground">Size: {item.size}</p>
-                                                                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
-                                                                        <p className="text-sm font-medium">{item.price} DA</p>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                                        <h4 className="font-semibold mb-2">Order Details</h4>
+                                                        <div className="space-y-1 text-sm">
+                                                            <p><span className="font-medium">Order ID:</span> {order._id}</p>
+                                                            <p><span className="font-medium">Order Date:</span> {format(new Date(order.orderDate), 'PPpp')}</p>
+                                                            <p><span className="font-medium">Total Items:</span> {order.items.length}</p>
+                                                            <p><span className="font-medium">Total Amount:</span> {order.totalAmount} DA</p>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </>
-                            ))}
-                            {orders.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-4">
-                                        No orders found
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
-            </CardContent>
-        </Card>
+                                                <div>
+                                                    <h4 className="font-semibold mb-2">Items</h4>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {order.items.map((item, index) => (
+                                                            <div key={index} className="flex items-center space-x-4 p-3 bg-background rounded-lg border">
+                                                                <img 
+                                                                    src={item.image} 
+                                                                    alt={item.name}
+                                                                    className="h-16 w-16 object-cover rounded"
+                                                                />
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="font-medium truncate">{item.name}</p>
+                                                                    <p className="text-sm text-muted-foreground">Size: {item.size}</p>
+                                                                    <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                                                                    <p className="text-sm font-medium">{item.price} DA</p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </>
+                        ))}
+                    </TableBody>
+                </Table>
+            </ScrollArea>
+        </div>
     );
 };
 
