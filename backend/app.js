@@ -14,7 +14,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS configuration for Render
 app.use(cors({
-    origin: ['https://ecommerce-websit-mern.onrender.com', process.env.CLIENT_URL].filter(Boolean),
+    origin: [
+        'https://ecommerce-websit-mern.onrender.com',
+        'http://localhost:5173',
+        'http://localhost:5174',
+        process.env.CLIENT_URL
+    ].filter(Boolean),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     exposedHeaders: ['Set-Cookie'],
