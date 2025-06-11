@@ -1,46 +1,101 @@
 // src/contexts/UserContext.js
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-    const [user, setUser] = useState(null);  // null = not logged in
-
-    // Optionally fetch the user from backend session on app load
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const fetchUser = async () => {
+    const fetchUser = useCallback(async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/check-auth`, { withCredentials: true });
-            setUser(response.data.user);
-            console.log(response.data.user);
-        } catch {
+            setLoading(true);
+            setError(null);
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_URL}/users/check-auth`, 
+                { withCredentials: true }
+            );
+            
+            if (response.data.user) {
+                setUser(response.data.user);
+            } else {
+                setUser(null);
+            }
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            setError(error.response?.data?.message || 'Failed to check authentication');
             setUser(null);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchUser();
+    }, [fetchUser]);
+
+    const login = async (credentials) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/users/admin-login`,
+                credentials,
+                { withCredentials: true }
+            );
+            setUser(response.data.user);
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.message || 'Login failed';
+            setError(message);
+            throw new Error(message);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchUser();
-    }, []);
-
     const logout = async () => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/users/logout`, { withCredentials: true });
-            setUser(null); // Clear user state on logout
+            setLoading(true);
+            await axios.post(
+                `${import.meta.env.VITE_API_URL}/users/logout`,
+                {},
+                { withCredentials: true }
+            );
+            setUser(null);
+            setError(null);
         } catch (error) {
-            console.error('Failed to log out:', error);
+            console.error('Logout failed:', error);
+            toast.error('Failed to logout. Please try again.');
+            throw error;
+        } finally {
+            setLoading(false);
         }
-    }
+    };
+
+    const value = {
+        user,
+        loading,
+        error,
+        login,
+        logout,
+        refreshUser: fetchUser
+    };
 
     return (
-        <UserContext.Provider value={{ user, setUser, logout, loading }}>
+        <UserContext.Provider value={value}>
             {children}
         </UserContext.Provider>
     );
 };
 
-// Custom hook
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+    const context = useContext(UserContext);
+    if (context === undefined) {
+        throw new Error('useUser must be used within a UserProvider');
+    }
+    return context;
+};

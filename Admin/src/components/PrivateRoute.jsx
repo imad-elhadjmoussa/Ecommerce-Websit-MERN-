@@ -1,12 +1,19 @@
 import { useUser } from "../context/UserContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import LoadingScreen from "./LoadingScreen";
 
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useUser();
+    const location = useLocation();
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) {
+        return <LoadingScreen />;
+    }
 
-    if (!user) return <Navigate to="/login" replace />;
+    if (!user) {
+        // Save the attempted URL for redirecting after login
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
 
     return children;
 };
