@@ -37,9 +37,7 @@ const AdminLogin = () => {
     };
 
     const handleSubmit = async (event) => {
-        if (event && typeof event.preventDefault === 'function') {
             event.preventDefault();
-        }
         setIsLoading(true);
         setError('');
 
@@ -72,21 +70,7 @@ const AdminLogin = () => {
             window.location.href = '/';
 
         } catch (err) {
-            if (axios.isAxiosError(err)) {
-                if (err.response) {
-                    // The request was made and the server responded with a status code
-                    // that falls out of the range of 2xx
-                    setError(err.response.data?.message || `Server error: ${err.response.status}`);
-                } else if (err.request) {
-                    // The request was made but no response was received
-                    setError('No response from server. Please check your internet connection.');
-                } else {
-                    // Something happened in setting up the request that triggered an Error
-                    setError('Failed to make request. Please try again.');
-                }
-            } else {
-                setError(err.message || 'An unexpected error occurred');
-            }
+            setError(err.response?.data?.message || 'Authentication failed');   
             console.error('Authentication error:', err);
         } finally {
             setIsLoading(false);
