@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, User, Menu, LogOut, UserCircle, Package, Loader2 } from 'lucide-react';
+import { ShoppingCart, Search, User, Menu, LogOut, UserCircle, Package, Loader2, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,6 +34,10 @@ export function Navbar() {
 
     const handleLogout = () => {
         logout();
+    };
+
+    const handleAdminDashboard = () => {
+        window.open('https://ecommerce-websit-mern-admin.onrender.com/', '_blank');
     };
 
     return (
@@ -146,6 +150,11 @@ export function Navbar() {
                                         <Package className="mr-2 h-4 w-4" />
                                         My Orders
                                     </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleAdminDashboard} className="text-primary">
+                                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                                    Admin Dashboard
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">
