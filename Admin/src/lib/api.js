@@ -77,7 +77,12 @@ export const getAllOrders = async () => {
 
 export const updateOrderStatus = async (orderId, status) => {
     try {
-        console.log('Sending update order status request:', { orderId, status });
+        console.log('Sending update order status request:', { 
+            orderId, 
+            status,
+            apiUrl: API_URL,
+            endpoint: `/orders/admin/${orderId}/status`
+        });
         
         const response = await api.patch(`/orders/admin/${orderId}/status`, { status });
         console.log('Update order status response:', response.data);
@@ -88,7 +93,14 @@ export const updateOrderStatus = async (orderId, status) => {
             error: error.response?.data || error.message,
             status: error.response?.status,
             orderId,
-            requestedStatus: status
+            requestedStatus: status,
+            apiUrl: API_URL,
+            endpoint: `/orders/admin/${orderId}/status`,
+            headers: error.config?.headers,
+            withCredentials: error.config?.withCredentials,
+            isAxiosError: error.isAxiosError,
+            networkError: error.message === 'Network Error',
+            fullError: error
         });
         throw new Error(
             error.response?.data?.message || 

@@ -6,12 +6,24 @@ const isAdmin = require('../middlewares/isAdmin');
 
 const router = express.Router();
 
+// Logging middleware for order status updates
+router.patch("/admin/:orderId/status", (req, res, next) => {
+    console.log('Order status update request:', {
+        orderId: req.params.orderId,
+        status: req.body.status,
+        user: req.user ? { id: req.user._id, email: req.user.email } : 'no user',
+        headers: req.headers,
+        origin: req.headers.origin,
+        cookie: req.headers.cookie ? 'present' : 'missing'
+    });
+    next();
+}, isAuthenticated, isAdmin, updateOrderStatus);
+
 // User routes
 router.post('/place-order', isAuthenticated, placeOrder);
 router.get("/", isAuthenticated, getUserOrders);
 
 // Admin routes
 router.get("/admin/all", isAuthenticated, isAdmin, getAllOrders);
-router.patch("/admin/:orderId/status", isAuthenticated, isAdmin, updateOrderStatus);
 
 module.exports = router;
