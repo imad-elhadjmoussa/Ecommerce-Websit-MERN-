@@ -1,4 +1,5 @@
 const User = require('../models/user.model'); // Adjust the path as necessary
+require('dotenv').config();
 
 const isAdmin = async (req, res, next) => {
     const user = req.user;
@@ -21,7 +22,25 @@ const isAdmin = async (req, res, next) => {
             return res.status(403).json({ message: 'Access denied: Not an admin user' });
         }
 
-        // User is admin
+        // Verify admin credentials against environment variables
+        if (dbUser.email !== process.env.ADMIN_EMAIL) {
+            console.error('Admin email mismatch:', { 
+                provided: dbUser.email, 
+                expected: process.env.ADMIN_EMAIL 
+            });
+            return res.status(403).json({ message: 'Access denied: Invalid admin credentials' });
+        }
+
+        // Verify password if user has one (might be OAuth user)
+        if (dbUser.password) {
+            const isPasswordMatch = await dbUser.matchPassword(process.env.ADMIN_PASSWORD);
+            if (!isPasswordMatch) {
+                console.error('Admin password mismatch');
+                return res.status(403).json({ message: 'Access denied: Invalid admin credentials' });
+            }
+        }
+
+        // All checks passed - user is verified admin
         next();
 
     } catch (error) {

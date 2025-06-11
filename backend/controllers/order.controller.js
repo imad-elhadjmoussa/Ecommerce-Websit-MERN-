@@ -100,9 +100,20 @@ const updateOrderStatus = async (req, res) => {
         const { orderId } = req.params;
         const { status } = req.body;
 
+        console.log('Updating order status:', {
+            orderId,
+            status,
+            user: req.user ? { id: req.user._id, email: req.user.email } : 'no user',
+            body: req.body
+        });
+
         // Validate status
         const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
         if (!validStatuses.includes(status)) {
+            console.error('Invalid status provided:', { 
+                provided: status, 
+                validStatuses 
+            });
             return res.status(400).json({ 
                 message: 'Invalid status. Must be one of: ' + validStatuses.join(', ')
             });
@@ -110,11 +121,20 @@ const updateOrderStatus = async (req, res) => {
 
         const order = await Order.findById(orderId);
         if (!order) {
+            console.error('Order not found:', { orderId });
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        console.log('Found order:', { 
+            orderId: order._id, 
+            currentStatus: order.status,
+            newStatus: status 
+        });
+
         order.status = status;
         await order.save();
+
+        console.log('Order status updated successfully');
 
         res.status(200).json({
             success: true,
@@ -122,8 +142,16 @@ const updateOrderStatus = async (req, res) => {
             order
         });
     } catch (error) {
-        console.error('Error updating order status:', error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error updating order status:', {
+            error: error.message,
+            stack: error.stack,
+            orderId: req.params.orderId,
+            status: req.body.status
+        });
+        res.status(500).json({ 
+            message: 'Server error',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 };
 

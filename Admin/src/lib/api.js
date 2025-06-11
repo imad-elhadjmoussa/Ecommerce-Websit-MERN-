@@ -77,11 +77,24 @@ export const getAllOrders = async () => {
 
 export const updateOrderStatus = async (orderId, status) => {
     try {
+        console.log('Sending update order status request:', { orderId, status });
+        
         const response = await api.patch(`/orders/admin/${orderId}/status`, { status });
+        console.log('Update order status response:', response.data);
+        
         return response.data;
     } catch (error) {
-        console.error('Error updating order status:', error);
-        throw new Error(error?.response?.data?.message || 'Failed to update order status');
+        console.error('Error updating order status:', {
+            error: error.response?.data || error.message,
+            status: error.response?.status,
+            orderId,
+            requestedStatus: status
+        });
+        throw new Error(
+            error.response?.data?.message || 
+            error.response?.data?.details || 
+            'Failed to update order status'
+        );
     }
 };
 
