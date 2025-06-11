@@ -17,6 +17,12 @@ const AdminLogin = () => {
         password: ''
     });
 
+    // Get test credentials from environment variables
+    const testCredentials = {
+        email: import.meta.env.VITE_TEST_ADMIN_EMAIL || 'admin@admin.com',
+        password: import.meta.env.VITE_TEST_ADMIN_PASSWORD || 'admin'
+    };
+
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData(prev => ({
@@ -66,8 +72,8 @@ const AdminLogin = () => {
                         <Info className="h-4 w-4" />
                         <AlertDescription className="text-sm">
                             <p className="font-medium mb-1">Test Credentials:</p>
-                            <p>Email: admin@admin.com</p>
-                            <p>Password: admin</p>
+                            <p>Email: {testCredentials.email}</p>
+                            <p>Password: {testCredentials.password}</p>
                         </AlertDescription>
                     </Alert>
                 </CardHeader>
