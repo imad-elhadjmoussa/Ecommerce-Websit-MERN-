@@ -2,7 +2,7 @@
 import Home from '../pages/Home';
 import Contact from '../pages/Contact';
 import Collection from '../pages/Collection';
-import { createBrowserRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import MainLayout from '../MainLayout';
 import About from '../pages/About';
 import Cart from '../pages/Cart';
@@ -13,9 +13,7 @@ import Product from '../pages/Product';
 import PublicRoute from '../components/PublicRoute';
 import NotFound from '../pages/NotFound';
 
-
-
-const router = createBrowserRouter([
+const router = createHashRouter([
     {
         path: '/',
         element: <MainLayout />,
@@ -36,7 +34,6 @@ const router = createBrowserRouter([
             { path: 'place-order', element: <PlaceOrder /> },
             { path: 'product/:productId', element: <Product /> },
             { path: '*', element: <NotFound /> },
-
         ],
     },
 ]);
