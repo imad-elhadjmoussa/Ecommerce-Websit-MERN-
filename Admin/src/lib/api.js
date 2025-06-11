@@ -93,6 +93,7 @@ export const updateOrderStatus = async (orderId, status) => {
         throw new Error(
             error.response?.data?.message || 
             error.response?.data?.details || 
+            error.message ||
             'Failed to update order status'
         );
     }
