@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '../MainLayout';
 import Home from '../pages/Home';
 import AddProduct from '../pages/AddProduct';
@@ -11,7 +11,7 @@ import PublicRoute from '../components/PublicRoute';
 const router = createBrowserRouter([
     {
         path: '/login',
-        element: (
+        element: ( 
             <PublicRoute>
                 <Login />
             </PublicRoute>
@@ -25,17 +25,34 @@ const router = createBrowserRouter([
             </PrivateRoute>
         ),
         children: [
-
             {
-                index: true, element: (
-                    <Home />
-                )
+                index: true, 
+                element: <Home />
             },
-            { path: 'add-product', element: <AddProduct /> },
-            { path: 'product-list', element: <ProductList /> },
-            { path: 'orders', element: <Orders /> },
+            { 
+                path: 'add-product', 
+                element: <AddProduct /> 
+            },
+            { 
+                path: 'product-list', 
+                element: <ProductList /> 
+            },
+            { 
+                path: 'orders', 
+                element: <Orders /> 
+            },
+            // Catch all route - redirect to home
+            {
+                path: '*',
+                element: <Navigate to="/" replace />
+            }
         ],
     },
+    // Catch all route for root level paths
+    {
+        path: '*',
+        element: <Navigate to="/" replace />
+    }
 ]);
 
 export default router;
