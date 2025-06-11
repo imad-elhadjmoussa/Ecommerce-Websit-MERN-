@@ -28,7 +28,7 @@ export const UserProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await axios.get(`${import.meta.env.VITE_API_URL}/auth/logout`, { withCredentials: true });
+            await axios.get(`${import.meta.env.VITE_API_URL}/users/logout`, { withCredentials: true });
             setUser(null); // Clear user state on logout
         } catch (error) {
             console.error('Failed to log out:', error);

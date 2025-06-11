@@ -9,20 +9,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
+import { useUser } from "../context/UserContext";
 
 function Sidebar() {
     const location = useLocation();
     const navigate = useNavigate();
     const pathname = location.pathname;
 
+    const { logout } = useUser();
+
     const handleLogout = async () => {
         try {
-            await axios.post('/api/users/logout', {}, {
-                withCredentials: true
-            });
-            
-            // Clear any local storage or state if needed
-            localStorage.removeItem('adminToken');
+            await logout();
             
             toast.success("Logged out successfully");
             navigate("/login");
