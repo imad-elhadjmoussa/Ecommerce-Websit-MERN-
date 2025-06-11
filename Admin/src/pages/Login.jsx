@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import axios from "axios";
 import { useUser } from "../context/UserContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const AdminLogin = () => {
     const { setUser } = useUser();
@@ -62,6 +62,14 @@ const AdminLogin = () => {
                     <CardTitle className="text-2xl text-center">
                         Admin Portal Login
                     </CardTitle>
+                    <Alert className="bg-muted">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                            <p className="font-medium mb-1">Test Credentials:</p>
+                            <p>Email: admin@admin.com</p>
+                            <p>Password: admin</p>
+                        </AlertDescription>
+                    </Alert>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <form onSubmit={handleSubmit}>
@@ -113,11 +121,6 @@ const AdminLogin = () => {
                         </div>
                     </form>
                 </CardContent>
-                <CardFooter className="flex flex-col items-center">
-                    <Button variant="link" className="text-muted-foreground" asChild>
-                        <Link to="/forgot-password">Forgot password?</Link>
-                    </Button>
-                </CardFooter>
             </Card>
         </div>
     );
