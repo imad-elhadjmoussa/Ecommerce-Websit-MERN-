@@ -91,7 +91,7 @@ const isAuthenticated = async (req, res) => {
     }
 };
 
-const adminLogin=async (req, res) =>{
+const adminLogin = async (req, res) => {
     const { email, password } = req.body;
 
     try {
@@ -111,24 +111,48 @@ const adminLogin=async (req, res) =>{
             await user.save();
         }
 
+        // Clear passport user if exists
+        if (req.user) {
+            req.logout((err) => {
+                if (err) {
+                    console.error('Error logging out passport user:', err);
+                }
+            });
+        }
+
         // Store in session
         req.session.user = {
             _id: user._id,
             username: user.username,
             email: user.email,
-            isAdmin: user.isAdmin,
+            isAdmin: true, // Force isAdmin to true for admin login
             avatar: user.avatar
         };
 
-        res.json({
-            message: "Admin logged in successfully",
-            user: req.session.user
+        // Save session explicitly
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ message: "Failed to create admin session" });
+            }
+
+            console.log('Admin login successful:', {
+                userId: user._id,
+                sessionId: req.session.id,
+                isAdmin: true,
+                passportUserCleared: !req.user
+            });
+
+            res.json({
+                message: "Admin logged in successfully",
+                user: req.session.user
+            });
         });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server error" });
     }
-}
+};
 
 module.exports = {
     register,
