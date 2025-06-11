@@ -84,7 +84,7 @@ export const updateOrderStatus = async (orderId, status) => {
             endpoint: `/orders/admin/${orderId}/status`
         });
         
-        const response = await api.patch(`/orders/admin/${orderId}/status`, { status });
+        const response = await api.post(`/orders/admin/${orderId}/status`, { status });
         console.log('Update order status response:', response.data);
         
         return response.data;

@@ -7,7 +7,7 @@ const isAdmin = require('../middlewares/isAdmin');
 const router = express.Router();
 
 // Logging middleware for order status updates
-router.patch("/admin/:orderId/status", (req, res, next) => {
+router.post("/admin/:orderId/status", (req, res, next) => {
     console.log('Order status update request:', {
         orderId: req.params.orderId,
         status: req.body.status,
