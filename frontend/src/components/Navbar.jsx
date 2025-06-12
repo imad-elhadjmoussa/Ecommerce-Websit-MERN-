@@ -83,6 +83,7 @@ export function Navbar() {
                                         Contact
                                     </Button>
                                 </Link>
+
                             </nav>
                         </SheetContent>
                     </Sheet>
@@ -108,11 +109,22 @@ export function Navbar() {
                         <Link to="/contact">
                             <Button variant="ghost">Contact</Button>
                         </Link>
+                        <a target='_blank' href="https://ecommerce-websit-mern-admin.onrender.com">
+                            <Button className="w-full justify-start">
+                                Dashboard Admin
+                            </Button>
+                        </a>
                     </nav>
                 </div>
 
                 {/* Search and Actions */}
                 <div className="flex items-center gap-2">
+                    <a className='sm:hidden' target='_blank' href="https://ecommerce-websit-mern-admin.onrender.com">
+                        <Button className="w-full justify-start">
+                            Dashboard Admin
+                        </Button>
+                    </a>
+
                     <div className="relative hidden sm:block">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
@@ -122,6 +134,8 @@ export function Navbar() {
                             onClick={handleSearchClick}
                         />
                     </div>
+
+
 
                     {isUserLoading ? (
                         <Button variant="ghost" size="icon" className="hover:bg-muted">
